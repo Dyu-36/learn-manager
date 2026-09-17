@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -101,7 +100,7 @@ fun ScheduleEditorDialog(
                 val validZone = runCatching { TimeZone.of(timeZone) }.isSuccess
 
                 error = when {
-                    dayValue !in 1..7 -> "Thứ phải từ 1 đến 7"
+                    dayValue == null || dayValue !in 1..7 -> "Thứ phải từ 1 đến 7"
                     parsedTime == null -> "Khoảng giờ không hợp lệ"
                     content.isBlank() -> "Nội dung không được trống"
                     type.isBlank() -> "Loại không được trống"
