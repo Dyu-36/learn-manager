@@ -4,36 +4,50 @@
 
 - JDK 17 or newer.
 - Android SDK 36 for Android builds.
-- Gradle 8.13 if the wrapper JAR has not been generated locally yet.
+- Internet access on the first dependency download.
 
-The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0 and Android Gradle Plugin 8.13.2.
+The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0, Android Gradle Plugin 8.13.2, kotlinx.coroutines 1.11.0, kotlinx.serialization 1.11.0 and kotlinx-datetime 0.8.0.
 
-## First local run
+## First local run on Windows
 
-If `gradle/wrapper/gradle-wrapper.jar` is missing, run once with a locally installed Gradle:
+The repository does not currently commit the binary `gradle-wrapper.jar`. Generate the standard Gradle 8.13 wrapper once with the included bootstrap script:
 
-```bash
+```powershell
+powershell -ExecutionPolicy Bypass -File .\bootstrap-gradle.ps1
+```
+
+If Gradle 8.13 is already installed globally, this is equivalent:
+
+```powershell
 gradle wrapper --gradle-version 8.13
 ```
 
-Then:
+Then run:
+
+```powershell
+.\gradlew.bat :composeApp:run
+.\gradlew.bat :composeApp:desktopTest
+.\gradlew.bat :composeApp:assembleDebug
+```
+
+The debug APK is produced under `composeApp/build/outputs/apk/debug/`.
+
+## Linux/macOS commands
+
+After generating the wrapper:
 
 ```bash
 ./gradlew :composeApp:run
+./gradlew :composeApp:desktopTest
 ./gradlew :composeApp:assembleDebug
-./gradlew :composeApp:allTests
 ```
-
-On Windows use `gradlew.bat` after generating the wrapper.
-
-The debug APK is produced under `composeApp/build/outputs/apk/debug/`.
 
 ## Android notification behavior
 
 - Android 13+ asks for `POST_NOTIFICATIONS` on first launch.
 - Android 12+ can grant exact-alarm access from Settings inside LearnManager.
 - If exact-alarm access is not granted, the app falls back to an inexact alarm so reminders still work but can be late.
-- Weekly reminders schedule the next alarm after the current reminder fires.
+- Weekly reminders recalculate the next occurrence using the saved time zone, rather than adding a fixed seven-day millisecond duration.
 - Alarms are restored after reboot or app replacement.
 
 ## Optional Supabase sync
