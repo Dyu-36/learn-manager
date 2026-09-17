@@ -54,7 +54,7 @@ kotlin {
 
 android {
     namespace = "com.learnmanager"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.learnmanager"
