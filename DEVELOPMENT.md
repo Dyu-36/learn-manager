@@ -3,7 +3,7 @@
 ## Requirements
 
 - JDK 17 or newer.
-- Android SDK 37 for Android builds.
+- Android SDK 36 for Android builds.
 - Gradle 8.13 if the wrapper JAR has not been generated locally yet.
 
 The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0 and Android Gradle Plugin 8.13.2.
