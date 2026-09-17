@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$gradleVersion = "8.13"
+$gradleVersion = "9.3.1"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $bootstrapDir = Join-Path $root ".gradle-bootstrap"
 $zipPath = Join-Path $bootstrapDir "gradle-$gradleVersion-bin.zip"
