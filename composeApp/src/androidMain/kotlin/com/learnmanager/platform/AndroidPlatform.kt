@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.time.Instant
 
 actual object PlatformStorage {
     actual suspend fun read(): String? = withContext(Dispatchers.IO) {
@@ -67,14 +68,7 @@ actual object PlatformReminderScheduler {
 
     actual fun schedule(entry: ScheduleEntry) {
         val trigger = nextReminderInstant(entry) ?: return cancel(entry.id)
-        scheduleAlarm(
-            entryId = entry.id,
-            content = entry.content,
-            type = entry.type,
-            startTime = entry.startTime,
-            repeatWeekly = entry.repeatWeekly,
-            triggerAtMillis = trigger.toEpochMilliseconds(),
-        )
+        scheduleAlarm(entry, trigger.toEpochMilliseconds())
     }
 
     actual fun cancel(entryId: String) {
@@ -123,39 +117,17 @@ actual object PlatformReminderScheduler {
     }
 
     fun scheduleNextRepeatFromReceiver(
-        entryId: String,
-        content: String,
-        type: String,
-        startTime: String,
-        triggerAtMillis: Long,
+        entry: ScheduleEntry,
+        referenceAfterStartMillis: Long,
     ) {
-        scheduleAlarm(
-            entryId = entryId,
-            content = content,
-            type = type,
-            startTime = startTime,
-            repeatWeekly = true,
-            triggerAtMillis = triggerAtMillis,
-        )
+        val reference = Instant.fromEpochMilliseconds(referenceAfterStartMillis)
+        val next = nextReminderInstant(entry, reference) ?: return
+        scheduleAlarm(entry, next.toEpochMilliseconds())
     }
 
-    private fun scheduleAlarm(
-        entryId: String,
-        content: String,
-        type: String,
-        startTime: String,
-        repeatWeekly: Boolean,
-        triggerAtMillis: Long,
-    ) {
+    private fun scheduleAlarm(entry: ScheduleEntry, triggerAtMillis: Long) {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
-        val pendingIntent = pendingIntent(
-            entryId = entryId,
-            content = content,
-            type = type,
-            startTime = startTime,
-            repeatWeekly = repeatWeekly,
-            triggerAtMillis = triggerAtMillis,
-        )
+        val pendingIntent = pendingIntent(entry, triggerAtMillis)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
@@ -164,26 +136,24 @@ actual object PlatformReminderScheduler {
         }
     }
 
-    private fun pendingIntent(
-        entryId: String,
-        content: String,
-        type: String,
-        startTime: String,
-        repeatWeekly: Boolean,
-        triggerAtMillis: Long,
-    ): PendingIntent {
+    private fun pendingIntent(entry: ScheduleEntry, triggerAtMillis: Long): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = reminderAction(entryId)
-            putExtra(ReminderReceiver.EXTRA_ENTRY_ID, entryId)
-            putExtra(ReminderReceiver.EXTRA_CONTENT, content)
-            putExtra(ReminderReceiver.EXTRA_TYPE, type)
-            putExtra(ReminderReceiver.EXTRA_START_TIME, startTime)
-            putExtra(ReminderReceiver.EXTRA_REPEAT_WEEKLY, repeatWeekly)
+            action = reminderAction(entry.id)
+            putExtra(ReminderReceiver.EXTRA_ENTRY_ID, entry.id)
+            putExtra(ReminderReceiver.EXTRA_DAY_OF_WEEK, entry.dayOfWeek)
+            putExtra(ReminderReceiver.EXTRA_START_TIME, entry.startTime)
+            putExtra(ReminderReceiver.EXTRA_END_TIME, entry.endTime)
+            putExtra(ReminderReceiver.EXTRA_CONTENT, entry.content)
+            putExtra(ReminderReceiver.EXTRA_TYPE, entry.type)
+            putExtra(ReminderReceiver.EXTRA_WEEK_START_DATE, entry.weekStartDate)
+            putExtra(ReminderReceiver.EXTRA_TIME_ZONE_ID, entry.timeZoneId)
+            putExtra(ReminderReceiver.EXTRA_REPEAT_WEEKLY, entry.repeatWeekly)
+            putExtra(ReminderReceiver.EXTRA_REMINDER_MINUTES, entry.reminderMinutes)
             putExtra(ReminderReceiver.EXTRA_TRIGGER_AT, triggerAtMillis)
         }
         return PendingIntent.getBroadcast(
             context,
-            entryId.hashCode(),
+            entry.id.hashCode(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
