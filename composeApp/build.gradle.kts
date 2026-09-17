@@ -36,6 +36,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.kotlinx.coroutines.android)
         }
 
         desktopMain.dependencies {
@@ -70,6 +71,7 @@ android {
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        resources.excludes += "DebugProbesKt.bin"
     }
 }
 
