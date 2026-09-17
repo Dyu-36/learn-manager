@@ -8,6 +8,7 @@ import com.learnmanager.model.AppSettings
 import com.learnmanager.model.AppState
 import com.learnmanager.model.ScheduleEntry
 import com.learnmanager.parser.ScheduleDraft
+import com.learnmanager.platform.PlatformReminderScheduler
 import com.learnmanager.sync.SupabaseSyncClient
 import com.learnmanager.sync.SyncResult
 import kotlinx.datetime.LocalDate
@@ -96,6 +97,12 @@ class AppController(
             is SyncResult.Error -> updateSyncStatus(result.message)
             is SyncResult.Success -> {
                 val payload = result.payload ?: return updateSyncStatus(result.message)
+                val incomingIds = payload.entries.mapTo(mutableSetOf()) { it.id }
+                state.entries.asSequence()
+                    .map { it.id }
+                    .filterNot { it in incomingIds }
+                    .forEach(PlatformReminderScheduler::cancel)
+
                 val updatedSettings = state.settings.copy(
                     defaultReminderMinutes = payload.defaultReminderMinutes,
                     lastSyncMessage = result.message,
