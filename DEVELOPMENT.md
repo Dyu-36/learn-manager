@@ -8,7 +8,7 @@
 
 The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0, Android Gradle Plugin 9.1.1, Gradle 9.3.1, kotlinx.coroutines 1.11.0, kotlinx.serialization 1.11.0 and kotlinx-datetime 0.8.0.
 
-The current single-module KMP Android application uses the documented AGP 9 compatibility bridge (`android.builtInKotlin=false`, `android.newDsl=false`, and the legacy variant API) so the same `composeApp` module can remain both shared code and the Android application while this MVP is tested. Before moving to AGP 10, split the Android entry point into a dedicated `androidApp` module and move the shared module to `com.android.kotlin.multiplatform.library`.
+The current single-module KMP Android application uses the documented AGP 9 compatibility bridge (`android.builtInKotlin=false` and `android.newDsl=false`) so the same `composeApp` module can remain both shared code and the Android application while this MVP is tested. Before moving to AGP 10, split the Android entry point into a dedicated `androidApp` module and move the shared module to `com.android.kotlin.multiplatform.library`.
 
 ## First local run on Windows
 
