@@ -11,9 +11,7 @@ New-Item -ItemType Directory -Force -Path $bootstrapDir | Out-Null
 
 if (-not (Test-Path $gradleBat)) {
     Write-Host "Downloading Gradle $gradleVersion..."
-    Invoke-WebRequest \
-        -Uri "https://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip" \
-        -OutFile $zipPath
+    Invoke-WebRequest -Uri "https://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip" -OutFile $zipPath
 
     if (Test-Path $extractDir) {
         Remove-Item -Recurse -Force $extractDir
@@ -28,4 +26,4 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "Wrapper generated. Try: .\gradlew.bat :composeApp:desktopRun"
+Write-Host "Wrapper generated. Try: .\gradlew.bat :composeApp:run"
