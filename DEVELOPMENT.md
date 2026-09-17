@@ -3,23 +3,25 @@
 ## Requirements
 
 - JDK 17 or newer.
-- Android SDK 36 for Android builds.
+- Android SDK Platform 37 for Android builds.
 - Internet access on the first dependency download.
 
-The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0, Android Gradle Plugin 8.13.2, kotlinx.coroutines 1.11.0, kotlinx.serialization 1.11.0 and kotlinx-datetime 0.8.0.
+The project uses Kotlin 2.4.20, Compose Multiplatform 1.12.0, Android Gradle Plugin 9.1.1, Gradle 9.3.1, kotlinx.coroutines 1.11.0, kotlinx.serialization 1.11.0 and kotlinx-datetime 0.8.0.
+
+The current single-module KMP Android application uses the documented AGP 9 compatibility bridge (`android.builtInKotlin=false`, `android.newDsl=false`, and the legacy variant API) so the same `composeApp` module can remain both shared code and the Android application while this MVP is tested. Before moving to AGP 10, split the Android entry point into a dedicated `androidApp` module and move the shared module to `com.android.kotlin.multiplatform.library`.
 
 ## First local run on Windows
 
-The repository does not currently commit the binary `gradle-wrapper.jar`. Generate the standard Gradle 8.13 wrapper once with the included bootstrap script:
+The repository does not currently commit the binary `gradle-wrapper.jar`. Generate the standard Gradle 9.3.1 wrapper once with the included bootstrap script:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\bootstrap-gradle.ps1
 ```
 
-If Gradle 8.13 is already installed globally, this is equivalent:
+If Gradle 9.3.1 is already installed globally, this is equivalent:
 
 ```powershell
-gradle wrapper --gradle-version 8.13
+gradle wrapper --gradle-version 9.3.1
 ```
 
 Then run:
