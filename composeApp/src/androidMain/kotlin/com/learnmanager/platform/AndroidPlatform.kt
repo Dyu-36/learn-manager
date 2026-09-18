@@ -19,6 +19,10 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Instant
 
 actual object PlatformStorage {
@@ -30,10 +34,26 @@ actual object PlatformStorage {
     actual suspend fun write(content: String) = withContext(Dispatchers.IO) {
         val file = stateFile()
         file.parentFile?.mkdirs()
-        file.writeText(content)
+        val temp = file.resolveSibling(file.name + ".tmp")
+        temp.writeText(content)
+        writeAtomically(temp, file)
     }
 
     private fun stateFile(): File = File(AndroidAppServices.context().filesDir, "learn_manager_state.json")
+}
+
+/** Moves [temp] onto [target] atomically so a crash mid-write never corrupts the state file. */
+private fun writeAtomically(temp: File, target: File) {
+    try {
+        Files.move(
+            temp.toPath(),
+            target.toPath(),
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+    } catch (_: AtomicMoveNotSupportedException) {
+        Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
 }
 
 actual object PlatformHttp {
@@ -65,13 +85,16 @@ actual object PlatformHttp {
 
 actual object PlatformReminderScheduler {
     private val context: Context get() = AndroidAppServices.context()
+    private val scheduledIds = ConcurrentHashMap.newKeySet<String>()
 
     actual fun schedule(entry: ScheduleEntry) {
+        scheduledIds.add(entry.id)
         val trigger = nextReminderInstant(entry) ?: return cancel(entry.id)
         scheduleAlarm(entry, trigger.toEpochMilliseconds())
     }
 
     actual fun cancel(entryId: String) {
+        scheduledIds.remove(entryId)
         val alarmManager = context.getSystemService(AlarmManager::class.java)
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = reminderAction(entryId)
@@ -89,6 +112,8 @@ actual object PlatformReminderScheduler {
     }
 
     actual fun reschedule(entries: List<ScheduleEntry>) {
+        val activeIds = entries.mapTo(mutableSetOf()) { it.id }
+        scheduledIds.filterNot { it in activeIds }.forEach(::cancel)
         entries.forEach(::schedule)
     }
 

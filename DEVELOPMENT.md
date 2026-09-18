@@ -28,7 +28,6 @@ Then run:
 
 ```powershell
 .\gradlew.bat :composeApp:run
-.\gradlew.bat :composeApp:desktopTest
 .\gradlew.bat :composeApp:assembleDebug
 ```
 
@@ -40,7 +39,6 @@ After generating the wrapper:
 
 ```bash
 ./gradlew :composeApp:run
-./gradlew :composeApp:desktopTest
 ./gradlew :composeApp:assembleDebug
 ```
 
@@ -51,6 +49,21 @@ After generating the wrapper:
 - If exact-alarm access is not granted, the app falls back to an inexact alarm so reminders still work but can be late.
 - Weekly reminders recalculate the next occurrence using the saved time zone, rather than adding a fixed seven-day millisecond duration.
 - Alarms are restored after reboot or app replacement.
+- Rescheduling also cancels alarms that no longer belong to a stored entry (orphan cleanup).
+
+## Windows desktop behavior
+
+- Closing the window hides it to the system tray; the app keeps running so reminders still fire. The first hide shows a tray notification explaining this, and the tray menu offers "Mở LearnManager" and "Thoát".
+- The window opens at 1080×720 and cannot be resized below 680×480.
+- The tray and window use the same generated brand icon, so no image assets are required.
+
+## UI behavior
+
+- Light and dark themes follow the operating system setting.
+- The week view can navigate to previous/next weeks and return to the current week.
+- Today's view refreshes every 30 seconds and badges the entry that is currently in progress or next up.
+- Deleting an entry asks for confirmation first.
+- Status messages dismiss themselves after a few seconds.
 
 ## Optional Supabase sync
 
@@ -94,6 +107,8 @@ For personal use, tighten Row Level Security before exposing the project publicl
 
 - Android: app-private `filesDir/learn_manager_state.json`.
 - Desktop: `~/.learn-manager/state.json`.
+
+Both platforms write through a temporary file and an atomic move, so a crash mid-save cannot corrupt the state file.
 
 ## TSV import
 

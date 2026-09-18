@@ -8,6 +8,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.ConcurrentHashMap
@@ -24,10 +27,26 @@ actual object PlatformStorage {
     actual suspend fun write(content: String) = withContext(Dispatchers.IO) {
         val file = stateFile()
         file.parentFile?.mkdirs()
-        file.writeText(content)
+        val temp = file.resolveSibling(file.name + ".tmp")
+        temp.writeText(content)
+        writeAtomically(temp, file)
     }
 
     private fun stateFile(): File = File(System.getProperty("user.home"), ".learn-manager/state.json")
+}
+
+/** Moves [temp] onto [target] atomically so a crash mid-write never corrupts the state file. */
+private fun writeAtomically(temp: File, target: File) {
+    try {
+        Files.move(
+            temp.toPath(),
+            target.toPath(),
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
+    } catch (_: AtomicMoveNotSupportedException) {
+        Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
 }
 
 actual object PlatformHttp {

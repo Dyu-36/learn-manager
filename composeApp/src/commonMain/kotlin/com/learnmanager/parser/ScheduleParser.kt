@@ -20,6 +20,7 @@ data class ScheduleParseResult(
 )
 
 object ScheduleParser {
+    private val spaceColumnSeparatorRegex = Regex(""" {2,}""")
     private val timeRangeRegex = Regex(
         """^([01]?\d|2[0-3]):([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3]):([0-5]\d)$""",
     )
@@ -33,7 +34,7 @@ object ScheduleParser {
             val line = originalLine.trim()
             if (line.isBlank()) return@forEachIndexed
 
-            val columns = originalLine.split('\t').map(::normalizeWhitespace)
+            val columns = splitColumns(originalLine)
             if (lineNumber == firstNonBlankLineNumber(input) && looksLikeHeader(columns)) {
                 return@forEachIndexed
             }
@@ -81,13 +82,37 @@ object ScheduleParser {
         return ScheduleParseResult(validRows = valid, invalidRows = invalid)
     }
 
+    /**
+     * Rewrites recognizable rows to the display/import format used by the app:
+     * T2  08:30-10:00  Nội dung  Loại
+     *
+     * Rows that still cannot be recognized are kept so the preview can report
+     * their original line number and explain what must be corrected manually.
+     */
+    fun format(input: String): String = input.lineSequence().joinToString("\n") { originalLine ->
+        if (originalLine.isBlank()) return@joinToString ""
+
+        val columns = splitColumns(originalLine)
+        if (columns.size != 4 || looksLikeHeader(columns)) {
+            return@joinToString originalLine.trim()
+        }
+
+        val day = parseDay(columns[0])
+        val time = parseTimeRange(columns[1])
+        if (day == null || time == null || columns[2].isBlank() || columns[3].isBlank()) {
+            originalLine.trim()
+        } else {
+            listOf(dayCode(day), "${time.first}-${time.second}", columns[2], columns[3])
+                .joinToString("  ")
+        }
+    }
+
     fun parseDay(raw: String): Int? {
-        val normalized = normalizeWhitespace(raw)
-            .uppercase()
-            .replace("Ứ", "U")
-            .replace("Ừ", "U")
-            .replace("Ư", "U")
-            .replace(" ", "")
+        val normalized = buildString {
+            for (ch in normalizeWhitespace(raw).uppercase()) {
+                append(diacriticFold[ch] ?: ch)
+            }
+        }.filterNot { it == ' ' }
 
         return when (normalized) {
             "T2", "THU2", "MON", "MONDAY" -> 1
@@ -100,6 +125,23 @@ object ScheduleParser {
             else -> null
         }
     }
+
+    /** Folds Vietnamese diacritics to base letters so "Thứ 4", "CHỦ NHẬT" match their ASCII keys. */
+    private val diacriticFold = mapOf(
+        'Đ' to 'D',
+        'Á' to 'A', 'À' to 'A', 'Ả' to 'A', 'Ã' to 'A', 'Ạ' to 'A',
+        'Ă' to 'A', 'Ắ' to 'A', 'Ằ' to 'A', 'Ẳ' to 'A', 'Ẵ' to 'A', 'Ặ' to 'A',
+        'Â' to 'A', 'Ấ' to 'A', 'Ầ' to 'A', 'Ẩ' to 'A', 'Ẫ' to 'A', 'Ậ' to 'A',
+        'É' to 'E', 'È' to 'E', 'Ẻ' to 'E', 'Ẽ' to 'E', 'Ẹ' to 'E',
+        'Ê' to 'E', 'Ế' to 'E', 'Ề' to 'E', 'Ể' to 'E', 'Ễ' to 'E', 'Ệ' to 'E',
+        'Í' to 'I', 'Ì' to 'I', 'Ỉ' to 'I', 'Ĩ' to 'I', 'Ị' to 'I',
+        'Ó' to 'O', 'Ò' to 'O', 'Ỏ' to 'O', 'Õ' to 'O', 'Ọ' to 'O',
+        'Ô' to 'O', 'Ố' to 'O', 'Ồ' to 'O', 'Ổ' to 'O', 'Ỗ' to 'O', 'Ộ' to 'O',
+        'Ơ' to 'O', 'Ớ' to 'O', 'Ờ' to 'O', 'Ở' to 'O', 'Ỡ' to 'O', 'Ợ' to 'O',
+        'Ú' to 'U', 'Ù' to 'U', 'Ủ' to 'U', 'Ũ' to 'U', 'Ụ' to 'U',
+        'Ư' to 'U', 'Ứ' to 'U', 'Ừ' to 'U', 'Ử' to 'U', 'Ữ' to 'U', 'Ự' to 'U',
+        'Ý' to 'Y', 'Ỳ' to 'Y', 'Ỷ' to 'Y', 'Ỹ' to 'Y', 'Ỵ' to 'Y',
+    )
 
     fun parseTimeRange(raw: String): Pair<String, String>? {
         val match = timeRangeRegex.matchEntire(raw.trim()) ?: return null
@@ -124,6 +166,18 @@ object ScheduleParser {
 
     private fun firstNonBlankLineNumber(input: String): Int =
         input.lineSequence().indexOfFirst { it.isNotBlank() }.let { if (it < 0) -1 else it + 1 }
+
+    private fun splitColumns(line: String): List<String> {
+        val trimmed = line.trim()
+        val columns = if ('\t' in trimmed) {
+            trimmed.split('\t', limit = 4)
+        } else {
+            trimmed.split(spaceColumnSeparatorRegex, limit = 4)
+        }
+        return columns.map(::normalizeWhitespace)
+    }
+
+    private fun dayCode(dayOfWeek: Int): String = if (dayOfWeek == 7) "CN" else "T${dayOfWeek + 1}"
 
     private fun normalizeWhitespace(value: String): String =
         value.trim().replace(Regex("\\s+"), " ")

@@ -6,28 +6,48 @@ import kotlin.test.assertTrue
 
 class ScheduleParserTest {
     @Test
-    fun parsesValidTsvAndHeader() {
+    fun parsesRowsSeparatedByDoubleSpaces() {
+        val result = ScheduleParser.parse(
+            "T2  08:30-10:00  Cyber Security Certificate  Tự học",
+        )
+
+        assertTrue(result.invalidRows.isEmpty())
+        assertEquals(
+            ScheduleDraft(1, "08:30", "10:00", "Cyber Security Certificate", "Tự học"),
+            result.validRows.single(),
+        )
+    }
+
+    @Test
+    fun keepsSupportingPastedTabSeparatedRowsAndHeader() {
         val input = """
             Day\tTime\tContent\tType
-            T2\t08:30-10:00\tCyber Security Certificate\tTự học
             T3\t10:15-11:45\tNhập môn ATTT\tPreview
         """.trimIndent().replace("\\t", "\t")
 
         val result = ScheduleParser.parse(input)
 
-        assertEquals(2, result.validRows.size)
+        assertEquals(1, result.validRows.size)
         assertTrue(result.invalidRows.isEmpty())
-        assertEquals(1, result.validRows.first().dayOfWeek)
-        assertEquals("08:30", result.validRows.first().startTime)
+    }
+
+    @Test
+    fun formatsRecognizableInputBeforeImport() {
+        val input = "T2\t8:30 – 10:00\tCyber   Security Certificate\tTự   học"
+
+        val formatted = ScheduleParser.format(input)
+
+        assertEquals("T2  08:30-10:00  Cyber Security Certificate  Tự học", formatted)
+        assertEquals(1, ScheduleParser.parse(formatted).validRows.size)
     }
 
     @Test
     fun reportsMalformedRowsInsteadOfSilentlyDroppingThem() {
         val input = """
-            T2\t10:00-09:00\tSai giờ\tPreview
-            T9\t08:00-09:00\tSai thứ\tTự học
-            T4\t08:00-09:00\tThiếu cột
-        """.trimIndent().replace("\\t", "\t")
+            T2  10:00-09:00  Sai giờ  Preview
+            T9  08:00-09:00  Sai thứ  Tự học
+            T4  08:00-09:00  Thiếu cột
+        """.trimIndent()
 
         val result = ScheduleParser.parse(input)
 

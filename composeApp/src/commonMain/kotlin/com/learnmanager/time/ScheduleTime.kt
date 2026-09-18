@@ -10,7 +10,6 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -101,6 +100,3 @@ fun formatInstantForEntry(entry: ScheduleEntry, instant: Instant): String {
     val local = instant.toLocalDateTime(TimeZone.of(entry.timeZoneId))
     return "${dateLabel(local.date)} ${local.time.hour.toString().padStart(2, '0')}:${local.time.minute.toString().padStart(2, '0')}"
 }
-
-fun withinNextWeek(instant: Instant, now: Instant = Clock.System.now()): Boolean =
-    instant >= now && instant <= now + 7.days

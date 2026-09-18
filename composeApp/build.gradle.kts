@@ -35,6 +35,10 @@ kotlin {
             implementation(libs.kotlinx.datetime)
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.ktx)
@@ -44,10 +48,6 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-        }
-
-        commonTest.dependencies {
-            implementation(kotlin("test"))
         }
     }
 }
@@ -61,7 +61,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
     }
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -84,7 +84,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Exe, TargetFormat.Msi)
             packageName = "LearnManager"
-            packageVersion = "0.1.0"
+            packageVersion = "1.0.0"
         }
     }
 }

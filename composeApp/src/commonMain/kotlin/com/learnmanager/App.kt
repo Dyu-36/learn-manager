@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,14 +30,18 @@ import com.learnmanager.model.ScheduleEntry
 import com.learnmanager.platform.PlatformInfo
 import com.learnmanager.time.currentWeekStart
 import com.learnmanager.ui.ImportScreen
+import com.learnmanager.ui.LearnManagerTheme
 import com.learnmanager.ui.ScheduleEditorDialog
 import com.learnmanager.ui.SettingsScreen
 import com.learnmanager.ui.TodayScreen
 import com.learnmanager.ui.WeekScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+
+private const val MESSAGE_AUTO_DISMISS_MS = 6_000L
 
 private enum class MainScreen(val label: String) {
     TODAY("Hôm nay"),
@@ -51,12 +57,20 @@ fun LearnManagerApp() {
     var screen by remember { mutableStateOf(MainScreen.TODAY) }
     var editing by remember { mutableStateOf<ScheduleEntry?>(null) }
     var creating by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf<ScheduleEntry?>(null) }
 
     LaunchedEffect(Unit) {
         controller.initialize()
     }
 
-    MaterialTheme {
+    LaunchedEffect(controller.message) {
+        if (controller.message != null) {
+            delay(MESSAGE_AUTO_DISMISS_MS)
+            controller.clearMessage()
+        }
+    }
+
+    LearnManagerTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             if (controller.loading) {
                 Column(
@@ -107,7 +121,7 @@ fun LearnManagerApp() {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(message, style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = controller::clearMessage) { Text("OK") }
+                        TextButton(onClick = controller::clearMessage) { Text("OK") }
                     }
                 }
 
@@ -115,12 +129,12 @@ fun LearnManagerApp() {
                     MainScreen.TODAY -> TodayScreen(
                         entries = controller.state.entries,
                         onEdit = { editing = it },
-                        onDelete = { entry -> scope.launch { controller.deleteEntry(entry.id) } },
+                        onDelete = { deleting = it },
                     )
                     MainScreen.WEEK -> WeekScreen(
                         entries = controller.state.entries,
                         onEdit = { editing = it },
-                        onDelete = { entry -> scope.launch { controller.deleteEntry(entry.id) } },
+                        onDelete = { deleting = it },
                     )
                     MainScreen.IMPORT -> ImportScreen(
                         settings = controller.state.settings,
@@ -137,8 +151,8 @@ fun LearnManagerApp() {
                 }
             }
 
-            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
             if (creating) {
+                val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 ScheduleEditorDialog(
                     initial = null,
                     defaultWeekStart = currentWeekStart().toString(),
@@ -164,6 +178,23 @@ fun LearnManagerApp() {
                     onSave = { updated ->
                         editing = null
                         scope.launch { controller.saveEntry(updated) }
+                    },
+                )
+            }
+
+            deleting?.let { entry ->
+                AlertDialog(
+                    onDismissRequest = { deleting = null },
+                    title = { Text("Xóa lịch?") },
+                    text = { Text("\"${entry.content}\" (${entry.startTime}–${entry.endTime}) sẽ bị xóa và lời nhắc tương ứng bị hủy.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            deleting = null
+                            scope.launch { controller.deleteEntry(entry.id) }
+                        }) { Text("Xóa") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { deleting = null }) { Text("Hủy") }
                     },
                 )
             }

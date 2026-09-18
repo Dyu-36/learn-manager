@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -21,6 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.learnmanager.model.AppSettings
 import com.learnmanager.platform.PlatformReminderScheduler
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 @Composable
 fun SettingsScreen(
@@ -64,7 +68,20 @@ fun SettingsScreen(
         OutlinedTextField(anonKey, { anonKey = it }, label = { Text("Supabase anon key") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
         OutlinedTextField(syncCode, { syncCode = it }, label = { Text("Mã đồng bộ dùng chung") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
         Text("Trạng thái: ${settings.lastSyncMessage}")
-        error?.let { Text(it) }
+        settings.lastSyncEpochMillis?.let { millis ->
+            val local = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault())
+            Text(
+                "Lần cuối: %02d/%02d %02d:%02d".format(
+                    local.date.dayOfMonth,
+                    local.date.monthNumber,
+                    local.time.hour,
+                    local.time.minute,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(onClick = {
             val minutes = reminder.toIntOrNull()
