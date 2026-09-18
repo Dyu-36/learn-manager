@@ -60,8 +60,8 @@ android {
         applicationId = "com.learnmanager"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -84,7 +84,12 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Exe, TargetFormat.Msi)
             packageName = "LearnManager"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
+
+            windows {
+                // Keep this stable so Windows Installer can replace older LearnManager versions.
+                upgradeUuid = "BB8AF831-25E4-375E-8812-515A69AF081E"
+            }
         }
     }
 }
