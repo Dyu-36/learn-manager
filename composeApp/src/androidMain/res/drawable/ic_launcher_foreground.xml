@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Calendar outline with schedule lines, centered in the 66dp adaptive safe zone. -->
+    <path
+        android:pathData="M40,28 L40,37 M68,28 L68,37"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M34,36 L74,36 A6,6 0 0 1 80,42 L80,76 A6,6 0 0 1 74,82 L34,82 A6,6 0 0 1 28,76 L28,42 A6,6 0 0 1 34,36 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M38,52 L70,52 M38,62 L58,62"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+</vector>

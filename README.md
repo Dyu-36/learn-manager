@@ -228,18 +228,28 @@ Features should only be added when they directly improve the core workflow.
 
 ## Development status
 
-The project is currently in the initialization stage. The repository does not yet contain a complete Gradle or Android project.
+The initial scope is complete for Windows and Android:
+
+- KMP + Compose Multiplatform project builds with Gradle 9.3.1 (desktop app, Android APK, and a bundled Windows distribution).
+- Shared schedule parser accepts `T2  08:30-10:00  Cyber Security Certificate  Tự học` (two spaces between fields) and pasted TSV, with automatic formatting, preview, and validation.
+- Day and week views with week navigation, in-progress/next-up badges, and automatic refresh.
+- Manual entry editing with a scrollable editor dialog and Vietnamese weekday chips; deletion asks for confirmation.
+- Light/dark theme that follows the system; Vietnamese UI text throughout.
+- Windows: system tray with branded tray and window icons; closing the window keeps the app running in the tray (first hide shows an explanatory notification); minimum window size enforced.
+- Android: adaptive launcher icon (with Android 13+ monochrome variant), POST_NOTIFICATIONS runtime request, exact-alarm opt-in with inexact fallback, boot/package-replace rescheduling, and orphan-alarm cleanup on reschedule.
+- State files are written atomically on both platforms.
+- Supabase synchronization (push/pull, off by default) reschedules affected notifications after pull.
 
 ## Implementation order
 
-1. Initialize the Kotlin Multiplatform and Compose Multiplatform project.
-2. Define the shared schedule model.
-3. Implement and test the pasted-text parser.
-4. Build the import preview interface.
-5. Add local schedule storage.
-6. Build the Windows schedule interface.
-7. Build the Android schedule interface.
-8. Add synchronization.
-9. Add Android notifications.
-10. Add Windows notifications and system tray support.
-11. Test editing, deletion, reboot, time zones, and notification rescheduling.
+1. Initialize the Kotlin Multiplatform and Compose Multiplatform project. ✅
+2. Define the shared schedule model. ✅
+3. Implement and test the pasted-text parser. ✅
+4. Build the import preview interface. ✅
+5. Add local schedule storage. ✅
+6. Build the Windows schedule interface. ✅
+7. Build the Android schedule interface. ✅
+8. Add synchronization. ✅
+9. Add Android notifications. ✅
+10. Add Windows notifications and system tray support. ✅
+11. Test editing, deletion, reboot, time zones, and notification rescheduling. ✅
